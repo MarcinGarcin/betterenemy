@@ -34,6 +34,7 @@ public class AIPlayer extends Entity {
     
     private int lastHealth;
     private int lastOpponentHealth;
+    private double lastDistance;
     private double totalReward;
     
     private boolean moveLeft, moveRight, jumpAction, dashDown ;
@@ -53,7 +54,7 @@ public class AIPlayer extends Entity {
         
         brain = NeuralNetwork.load("ai_brain.dat");
         if (brain == null) {
-            brain = new NeuralNetwork(10, 64, 6, 0.001);
+            brain = new NeuralNetwork(10, 64, 6, 0.01);
         }
         
         setDefaultValues();
@@ -69,6 +70,10 @@ public class AIPlayer extends Entity {
         speed = 4;
         lastHealth = health;
         lastOpponentHealth = opponent.health;
+        
+        int myCenterX = x + width / 2;
+        int opponentCenterX = opponent.x + opponent.width / 2;
+        lastDistance = Math.abs(opponentCenterX - myCenterX);
     }
 
     public void loadPlayerSprites() {
@@ -214,6 +219,9 @@ public class AIPlayer extends Entity {
 
     private double calculateReward() {
         double reward = 0;
+        int myCenterX = x + width / 2;
+        int opponentCenterX = opponent.x + opponent.width / 2;
+        double distance = Math.abs(opponentCenterX - myCenterX);
         
         int opponentDamage = lastOpponentHealth - opponent.health;
         if (opponentDamage > 0) {
@@ -225,12 +233,27 @@ public class AIPlayer extends Entity {
             reward -= selfDamage * 2.0;
         }
         
-        int myCenterX = x + width / 2;
-        int opponentCenterX = opponent.x + opponent.width / 2;
-        double distance = Math.abs(opponentCenterX - myCenterX);
+        double distanceChange = lastDistance - distance;
+        reward += distanceChange * 0.1;  
         
-        if (distance < 200 && distance > 80) {
+        double maxDistance = 600.0;
+        double normalizedDistance = Math.min(distance / maxDistance, 1.0);
+        reward -= normalizedDistance * 0.15;
+        
+        if (distance < 150) {
+            reward += 0.3;
+        } else if (distance < 250) {
             reward += 0.1;
+        } else if (distance > 400) {
+            reward -= 0.4;
+        }
+        
+        if (distanceChange < -5 && !opponent.isAttacking()) {
+            reward -= 0.2;  
+        }
+        
+        if (distanceChange > 5 && opponent.isAttacking() && distance > 150) {
+            reward += 0.15;  // Reward closing in during opponent attack
         }
         
         if (opponent.health <= 0) {
@@ -239,6 +262,8 @@ public class AIPlayer extends Entity {
         if (health <= 0) {
             reward -= 100.0;
         }
+        
+        lastDistance = distance;
         
         return reward;
     }
@@ -451,6 +476,10 @@ public class AIPlayer extends Entity {
         attackHit = false;
         lastHealth = health;
         lastOpponentHealth = opponent.health;
+        
+        int myCenterX = x + width / 2;
+        int opponentCenterX = opponent.x + opponent.width / 2;
+        lastDistance = Math.abs(opponentCenterX - myCenterX);
     }
 
     public void onRoundEnd(boolean won) {
