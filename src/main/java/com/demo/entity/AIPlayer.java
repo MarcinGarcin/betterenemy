@@ -36,7 +36,7 @@ public class AIPlayer extends Entity {
     private int lastOpponentHealth;
     private double totalReward;
     
-    private boolean moveLeft, moveRight, jumpAction;
+    private boolean moveLeft, moveRight, jumpAction, dashDown ;
     private boolean fastAttack, slowAttack;
     
     private boolean attackHit = false;
@@ -169,6 +169,7 @@ public class AIPlayer extends Entity {
         
         handleMovement();
         handleJump();
+        handleDashDown();
         handleAttack();
         applyGravity();
         determineState();
@@ -196,7 +197,7 @@ public class AIPlayer extends Entity {
             case 0: moveLeft = true; break;
             case 1: moveRight = true; break;
             case 2: jumpAction = true; break;
-            case 3: break; 
+            case 3: dashDown = true; break;
             case 4: fastAttack = true; break;
             case 5: slowAttack = true; break;
         }
@@ -208,6 +209,7 @@ public class AIPlayer extends Entity {
         jumpAction = false;
         fastAttack = false;
         slowAttack = false;
+        dashDown = false;
     }
 
     private double calculateReward() {
@@ -257,6 +259,11 @@ public class AIPlayer extends Entity {
         if (jumpAction && onGround) {
             velocityY = JUMP_STRENGTH;
             onGround = false;
+        }
+    }
+    private void handleDashDown(){
+        if (dashDown && !onGround) {
+            velocityY += GRAVITY * 2; 
         }
     }
 

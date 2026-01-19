@@ -99,6 +99,7 @@ public class Player extends Entity {
 
         handleMovement();
         handleJump();
+        handleDashDown();
         handleAttack();
         applyGravity();
         determineState();
@@ -130,6 +131,11 @@ public class Player extends Entity {
         if (keyH.upPressed && onGround) {
             velocityY = JUMP_STRENGTH;
             onGround = false;
+        }
+    }
+    private void handleDashDown(){
+        if (keyH.downPressed && !onGround) {
+            velocityY += GRAVITY * 2; 
         }
     }
 
