@@ -13,12 +13,16 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
 import java.awt.RenderingHints;
+import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Random;
 
 public class GamePanel extends JPanel implements Runnable {
 
     private BufferedImage backgroundImage;
+    private BufferedImage floorImage;
     Thread gameThread;
     KeyHandler keyHandler = new KeyHandler();
 
@@ -41,6 +45,10 @@ public class GamePanel extends JPanel implements Runnable {
     
     private boolean showHitboxes = false; 
 
+    private ArrayList<Leaf> leaves = new ArrayList<>();
+    private Random random = new Random();
+    private final int MAX_LEAVES = 60;
+
     public GamePanel() {
         this.setPreferredSize(new Dimension(screenWidth, screenHeight));
         this.setDoubleBuffered(true);
@@ -53,17 +61,27 @@ public class GamePanel extends JPanel implements Runnable {
         aiPlayer = new AIPlayer(this, player);
 
         init();
+        initLeaves();
     }
 
     private void init() {
         try {
             backgroundImage = ImageIO.read(getClass().getResourceAsStream("/assets/background.png"));
+            floorImage = ImageIO.read(getClass().getResourceAsStream("/assets/floor.png"));
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
+    private void initLeaves() {
+        for (int i = 0; i < MAX_LEAVES; i++) {
+            leaves.add(new Leaf(random.nextInt(screenWidth), random.nextInt(screenHeight - 100)));
+        }
+    }
+
     public void update() {
+        updateLeaves();
+
         if (roundOver) {
             roundDelay--;
             if (roundDelay <= 0) {
@@ -77,6 +95,12 @@ public class GamePanel extends JPanel implements Runnable {
         
         checkCombat();
         checkRoundEnd();
+    }
+
+    private void updateLeaves() {
+        for (Leaf leaf : leaves) {
+            leaf.update(screenWidth, screenHeight);
+        }
     }
     
     private void checkCombat() {
@@ -143,8 +167,21 @@ public class GamePanel extends JPanel implements Runnable {
             g2.fillRect(0, 0, screenWidth, screenHeight);
         }
 
+        drawLeaves(g2);
+        
         player.draw(g2);
         aiPlayer.draw(g2);
+
+        
+
+        if (floorImage != null) {
+            g2.drawImage(floorImage, 0, screenHeight - floorImage.getHeight(), screenWidth, floorImage.getHeight(), null);
+        } else {
+            g2.setColor(new Color(50, 50, 80));
+            g2.fillRect(0, 0, screenWidth, screenHeight);
+        }
+
+        
         
         if (showHitboxes) {
             drawHitboxes(g2);
@@ -152,10 +189,23 @@ public class GamePanel extends JPanel implements Runnable {
         
         drawHealthBars(g2);
         
-        
-        
         if (roundOver) {
             drawRoundMessage(g2);
+        }
+    }
+
+    private void drawLeaves(Graphics2D g2) {
+        AffineTransform originalTransform = g2.getTransform();
+
+        for (Leaf leaf : leaves) {
+            g2.setColor(leaf.color);
+            
+            g2.translate(leaf.x, leaf.y);
+            g2.rotate(Math.toRadians(leaf.angle));
+            
+            g2.fillRect(0, 0, leaf.size, leaf.size);
+            
+            g2.setTransform(originalTransform);
         }
     }
     

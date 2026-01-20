@@ -253,7 +253,7 @@ public class AIPlayer extends Entity {
         }
         
         if (distanceChange > 5 && opponent.isAttacking() && distance > 150) {
-            reward += 0.15;  // Reward closing in during opponent attack
+            reward += 0.15;  
         }
         
         if (opponent.health <= 0) {
