@@ -43,7 +43,7 @@ public class GamePanel extends JPanel implements Runnable {
     private int playerWins = 0;
     private int aiWins = 0;
     
-    private boolean showHitboxes = true; 
+    private boolean showHitboxes = false; 
 
     private ArrayList<Leaf> leaves = new ArrayList<>();
     private Random random = new Random();
